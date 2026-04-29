@@ -13,7 +13,7 @@ export function MainPage({ activeTab, onTabChange, onOpenBook, onAddBook, onStat
   const [books, setBooks] = useState([]);
 
   useEffect(() => {
-    api.getBooks(activeTab).then(setBooks);
+    api.getBooks(activeTab).then(setBooks).catch(console.error);
   }, [activeTab, refreshKey]);
 
   return (
@@ -44,7 +44,7 @@ export function MainPage({ activeTab, onTabChange, onOpenBook, onAddBook, onStat
             <div className="author">{book.author}{book.genre ? ` · ${book.genre}` : ''}</div>
             <div className="meta">
               {book.rating && <span className="rating">{stars(book.rating)}</span>}
-              {book.total_pages && <span>{book.current_page || 0} / {book.total_pages} стр.</span>}
+              {book.total_pages > 0 && <span>{book.current_page || 0} / {book.total_pages} стр.</span>}
             </div>
             {book.total_pages > 0 && (
               <div className="progress-bar">

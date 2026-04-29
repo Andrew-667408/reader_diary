@@ -6,10 +6,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const VALID_STATUSES = ['reading', 'finished', 'wishlist'];
+const VALID_NOTE_TYPES = ['thought', 'quote', 'summary'];
+
 // --- Books ---
 
 app.get('/api/books', (req, res) => {
   const { status } = req.query;
+  if (status && !VALID_STATUSES.includes(status)) {
+    return res.status(400).json({ error: 'invalid status' });
+  }
   const books = status
     ? db.prepare('SELECT * FROM books WHERE status = ? ORDER BY added_at DESC').all(status)
     : db.prepare('SELECT * FROM books ORDER BY added_at DESC').all();
@@ -26,9 +32,13 @@ app.get('/api/books/:id', (req, res) => {
 app.post('/api/books', (req, res) => {
   const { title, author, genre, status = 'wishlist', total_pages } = req.body;
   if (!title || !author) return res.status(400).json({ error: 'title and author required' });
+  if (!VALID_STATUSES.includes(status)) return res.status(400).json({ error: 'invalid status' });
+
+  const finishedAt = status === 'finished' ? new Date().toISOString() : null;
+
   const result = db.prepare(`
-    INSERT INTO books (title, author, genre, status, total_pages) VALUES (?, ?, ?, ?, ?)
-  `).run(title, author, genre || null, status, total_pages || null);
+    INSERT INTO books (title, author, genre, status, total_pages, finished_at) VALUES (?, ?, ?, ?, ?, ?)
+  `).run(title, author, genre || null, status, total_pages || null, finishedAt);
   const book = db.prepare('SELECT * FROM books WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(book);
 });
@@ -36,6 +46,17 @@ app.post('/api/books', (req, res) => {
 app.patch('/api/books/:id', (req, res) => {
   const book = db.prepare('SELECT * FROM books WHERE id = ?').get(req.params.id);
   if (!book) return res.status(404).json({ error: 'Not found' });
+
+  if (req.body.status !== undefined && !VALID_STATUSES.includes(req.body.status)) {
+    return res.status(400).json({ error: 'invalid status' });
+  }
+  if (req.body.rating !== undefined) {
+    const r = Number(req.body.rating);
+    if (!Number.isInteger(r) || r < 1 || r > 5) {
+      return res.status(400).json({ error: 'rating must be integer 1-5' });
+    }
+    req.body.rating = r;
+  }
 
   const fields = ['title', 'author', 'genre', 'status', 'rating', 'total_pages', 'current_page', 'finished_at'];
   const updates = {};
@@ -66,8 +87,13 @@ app.get('/api/books/:id/notes', (req, res) => {
 });
 
 app.post('/api/books/:id/notes', (req, res) => {
+  const book = db.prepare('SELECT id FROM books WHERE id = ?').get(req.params.id);
+  if (!book) return res.status(404).json({ error: 'Book not found' });
+
   const { type = 'thought', content, page } = req.body;
   if (!content) return res.status(400).json({ error: 'content required' });
+  if (!VALID_NOTE_TYPES.includes(type)) return res.status(400).json({ error: 'invalid type' });
+
   const result = db.prepare(
     'INSERT INTO notes (book_id, type, content, page) VALUES (?, ?, ?, ?)'
   ).run(req.params.id, type, content, page || null);
@@ -79,6 +105,24 @@ app.delete('/api/notes/:id', (req, res) => {
   const result = db.prepare('DELETE FROM notes WHERE id = ?').run(req.params.id);
   if (result.changes === 0) return res.status(404).json({ error: 'Not found' });
   res.status(204).send();
+});
+
+// --- Search ---
+
+app.get('/api/search', (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q) return res.json([]);
+  const like = `%${q}%`;
+  const results = db.prepare(`
+    SELECT n.id, n.type, n.content, n.page, n.created_at,
+           b.id as book_id, b.title as book_title, b.author as book_author
+    FROM notes n
+    JOIN books b ON b.id = n.book_id
+    WHERE n.content LIKE ? OR b.title LIKE ? OR b.author LIKE ?
+    ORDER BY n.created_at DESC
+    LIMIT 50
+  `).all(like, like, like);
+  res.json(results);
 });
 
 // --- Stats ---

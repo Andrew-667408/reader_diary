@@ -113,7 +113,7 @@ body {
 .btn-icon { background: transparent; border: none; cursor: pointer; color: #2c2c2c; font-size: 20px; padding: 4px; }
 .btn-back { background: transparent; border: none; cursor: pointer; color: #7a6a55; font-size: 24px; line-height: 1; }
 
-.note-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.note-list { display: flex; flex-direction: column; gap: 8px; }
 
 .note-item {
   background: #fff;
@@ -222,6 +222,10 @@ select option { background: #faf6f0; color: #2c2c2c; }
 .NativePanel {
   background: linear-gradient(transparent, rgba(18, 10, 4, 0.97)) !important;
   padding: 28px 16px 14px !important;
+}
+
+.NativePanel .Bubble {
+  display: none !important;
 }
 
 .NativePanel .TextInput {

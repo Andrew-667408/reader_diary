@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
 
-const fetchBookInfo = async (title) => {
+const PARTICLES = new Set([
+  'в','во','на','с','со','к','ко','по','за','до','от','при','про','без',
+  'для','под','над','перед','через','из','о','об','обо','у','и','или',
+  'но','а','да','не','ни','же','ли','бы','то','как','что','это','со',
+]);
+
+const toTitleCase = (str) => {
+  if (!str) return str;
+  return str.toLowerCase().split(' ').map((w, i) =>
+    (i > 0 && PARTICLES.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)
+  ).join(' ');
+};
+
+const fetchBookInfo = async (title, signal) => {
   try {
-    const res = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&limit=1`);
+    const res = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&limit=1`, { signal });
     const data = await res.json();
     const book = data.docs?.[0];
     if (!book) return null;
@@ -17,48 +30,65 @@ const fetchBookInfo = async (title) => {
   }
 };
 
-export function AddBookModal({ initialTitle = '', onClose, onSaved }) {
+export function AddBookModal({ initialTitle = '', initialPages = '', onClose, onSaved }) {
   const [form, setForm] = useState({
-    title: initialTitle,
+    title: toTitleCase(initialTitle),
     author: '',
     genre: '',
     status: 'wishlist',
-    total_pages: '',
+    total_pages: initialPages,
   });
   const [loading, setLoading] = useState(false);
+  const [lookupFailed, setLookupFailed] = useState(false);
+  const abortRef = useRef(null);
 
-  useEffect(() => {
-    if (!initialTitle) return;
-    setLoading(true);
-    fetchBookInfo(initialTitle).then((info) => {
-      if (info) setForm(f => ({
+  const applyInfo = (info, signal) => {
+    if (signal?.aborted) return;
+    setLoading(false);
+    if (info) {
+      setLookupFailed(false);
+      setForm(f => ({
         ...f,
         author: info.author || f.author,
         genre: info.genre || f.genre,
         total_pages: info.pages ? String(info.pages) : f.total_pages,
       }));
-      setLoading(false);
-    });
-  }, [initialTitle]);
+    } else {
+      setLookupFailed(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!initialTitle) return;
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setLoading(true);
+    setLookupFailed(false);
+    const cleanTitle = initialTitle.replace(/\s+(\d+|сто|двести|триста|четыреста|пятьсот|шестьсот|семьсот|восемьсот|девятьсот|тысяча|тысячи)\s*(страниц|страницы|страницу|стр)\.?\s*$/i, '').trim();
+    fetchBookInfo(cleanTitle, ctrl.signal).then((info) => applyInfo(info, ctrl.signal));
+    return () => ctrl.abort();
+  }, [initialTitle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleTitleBlur = async () => {
     if (!form.title.trim() || form.author) return;
+    if (abortRef.current) abortRef.current.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     setLoading(true);
-    const info = await fetchBookInfo(form.title);
-    if (info) setForm(f => ({
-      ...f,
-      author: info.author || f.author,
-      genre: info.genre || f.genre,
-      total_pages: info.pages ? String(info.pages) : f.total_pages,
-    }));
-    setLoading(false);
+    setLookupFailed(false);
+    const info = await fetchBookInfo(form.title, ctrl.signal);
+    applyInfo(info, ctrl.signal);
   };
 
   const save = async () => {
     if (!form.title.trim() || !form.author.trim()) return;
-    await api.createBook({ ...form, total_pages: form.total_pages ? Number(form.total_pages) : undefined });
+    await api.createBook({
+      ...form,
+      title: toTitleCase(form.title.trim()),
+      total_pages: form.total_pages ? Number(form.total_pages) : undefined,
+    }).catch(console.error);
     onSaved();
   };
 
@@ -71,7 +101,7 @@ export function AddBookModal({ initialTitle = '', onClose, onSaved }) {
           <input
             value={form.title}
             onChange={e => set('title', e.target.value)}
-            onBlur={handleTitleBlur}
+            onBlur={e => { set('title', toTitleCase(e.target.value.trim())); handleTitleBlur(); }}
             placeholder="Тихий Дон"
           />
         </div>
@@ -79,6 +109,7 @@ export function AddBookModal({ initialTitle = '', onClose, onSaved }) {
           <label>Автор *</label>
           <input value={form.author} onChange={e => set('author', e.target.value)} placeholder="Михаил Шолохов" />
           {loading && <span className="loading-hint">Ищу информацию о книге…</span>}
+          {!loading && lookupFailed && <span className="loading-hint" style={{ color: '#999' }}>Не нашёл в базе — заполните вручную</span>}
         </div>
         <div className="field">
           <label>Жанр</label>
@@ -94,7 +125,7 @@ export function AddBookModal({ initialTitle = '', onClose, onSaved }) {
         </div>
         <div className="field">
           <label>Страниц</label>
-          <input type="number" value={form.total_pages} onChange={e => set('total_pages', e.target.value)} placeholder="720" />
+          <input type="number" min="1" value={form.total_pages} onChange={e => set('total_pages', e.target.value)} placeholder="720" />
         </div>
         <div className="modal-actions">
           <button className="btn btn-secondary" onClick={onClose}>Отмена</button>

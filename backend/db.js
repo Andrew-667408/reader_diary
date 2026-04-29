@@ -3,6 +3,8 @@ const path = require('path');
 
 const db = new Database(path.join(__dirname, 'diary.db'));
 
+db.pragma('foreign_keys = ON');
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS books (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
