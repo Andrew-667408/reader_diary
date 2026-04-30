@@ -8,7 +8,7 @@ export function AddNoteModal({ bookId, onClose, onSaved }) {
 
   const save = async () => {
     if (!form.content.trim()) return;
-    await api.createNote(bookId, { ...form, page: form.page ? Number(form.page) : undefined });
+    await api.createNote(bookId, { ...form, page: form.page ? Math.floor(Number(form.page)) : undefined });
     onSaved();
   };
 
@@ -34,7 +34,7 @@ export function AddNoteModal({ bookId, onClose, onSaved }) {
         </div>
         <div className="field">
           <label>Страница</label>
-          <input type="number" min="1" value={form.page} onChange={e => set('page', e.target.value)} placeholder="142" />
+          <input type="number" min="1" step="1" value={form.page} onChange={e => set('page', e.target.value)} placeholder="142" />
         </div>
         <div className="modal-actions">
           <button className="btn btn-secondary" onClick={onClose}>Отмена</button>

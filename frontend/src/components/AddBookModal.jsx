@@ -84,10 +84,12 @@ export function AddBookModal({ initialTitle = '', initialPages = '', onClose, on
 
   const save = async () => {
     if (!form.title.trim() || !form.author.trim()) return;
+    const totalPages = form.total_pages ? Math.floor(Number(form.total_pages)) : undefined;
     await api.createBook({
       ...form,
       title: toTitleCase(form.title.trim()),
-      total_pages: form.total_pages ? Number(form.total_pages) : undefined,
+      total_pages: totalPages,
+      current_page: form.status === 'finished' && totalPages ? totalPages : undefined,
     }).catch(console.error);
     onSaved();
   };
@@ -125,7 +127,7 @@ export function AddBookModal({ initialTitle = '', initialPages = '', onClose, on
         </div>
         <div className="field">
           <label>Страниц</label>
-          <input type="number" min="1" value={form.total_pages} onChange={e => set('total_pages', e.target.value)} placeholder="720" />
+          <input type="number" min="1" step="1" value={form.total_pages} onChange={e => set('total_pages', e.target.value)} placeholder="720" />
         </div>
         <div className="modal-actions">
           <button className="btn btn-secondary" onClick={onClose}>Отмена</button>

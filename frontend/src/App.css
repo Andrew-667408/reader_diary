@@ -219,6 +219,60 @@ select option { background: #faf6f0; color: #2c2c2c; }
 
 .loading-hint { font-size: 12px; color: #a09080; font-style: italic; }
 
+/* ── Responsive ─────────────────────────────────────────── */
+
+/* Touch targets — all interactive elements min 44px */
+.btn { min-height: 44px; }
+.tab { min-height: 40px; }
+
+/* Mobile: 559px and below */
+@media (max-width: 559px) {
+  .page { padding: 10px 10px 90px; }
+
+  .header h1 { font-size: 18px; }
+  .btn { padding: 8px 12px; font-size: 13px; }
+
+  .tabs { gap: 6px; }
+  .tab { padding: 6px 12px; font-size: 13px; }
+
+  .book-card { padding: 12px; }
+  .book-card h3 { font-size: 15px; }
+
+  .stat-card .value { font-size: 26px; }
+
+  .modal { padding: 20px 14px 90px; }
+
+  .actions { gap: 6px; }
+  .actions .btn { font-size: 13px; padding: 8px 10px; }
+}
+
+/* Tablet and up: center modal as dialog instead of bottom-sheet */
+@media (min-width: 600px) {
+  .modal-overlay { align-items: center; justify-content: center; }
+
+  .modal {
+    border-radius: 16px;
+    width: min(520px, 92vw);
+    max-height: 85vh;
+    padding-bottom: 28px;
+  }
+}
+
+/* Wide landscape (959px+) */
+@media (min-width: 960px) {
+  .page { padding: 20px 24px 20px; }
+
+  .book-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    align-content: start;
+  }
+
+  .header h1 { font-size: 26px; }
+  .stat-card .value { font-size: 36px; }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
 .NativePanel {
   background: linear-gradient(transparent, rgba(18, 10, 4, 0.97)) !important;
   padding: 28px 16px 14px !important;
