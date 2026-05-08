@@ -94,6 +94,10 @@ export function AddBookModal({ initialTitle = '', initialPages = '', onClose, on
     onSaved();
   };
 
+  const handleKey = (e) => {
+    if (e.key === 'Enter' && form.title && form.author) save();
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -104,18 +108,33 @@ export function AddBookModal({ initialTitle = '', initialPages = '', onClose, on
             value={form.title}
             onChange={e => set('title', e.target.value)}
             onBlur={e => { set('title', toTitleCase(e.target.value.trim())); handleTitleBlur(); }}
+            onKeyDown={handleKey}
             placeholder="Тихий Дон"
+            autoComplete="off"
           />
         </div>
         <div className="field">
           <label>Автор *</label>
-          <input value={form.author} onChange={e => set('author', e.target.value)} placeholder="Михаил Шолохов" />
-          {loading && <span className="loading-hint">Ищу информацию о книге…</span>}
-          {!loading && lookupFailed && <span className="loading-hint" style={{ color: '#999' }}>Не нашёл в базе — заполните вручную</span>}
+          <input
+            value={form.author}
+            onChange={e => set('author', e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Михаил Шолохов"
+            autoComplete="off"
+          />
+          <span className="loading-hint">
+            {loading ? 'Ищу информацию о книге…' : lookupFailed ? 'Не нашёл в базе — заполните вручную' : ''}
+          </span>
         </div>
         <div className="field">
           <label>Жанр</label>
-          <input value={form.genre} onChange={e => set('genre', e.target.value)} placeholder="Роман" />
+          <input
+            value={form.genre}
+            onChange={e => set('genre', e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Роман"
+            autoComplete="off"
+          />
         </div>
         <div className="field">
           <label>Статус</label>
@@ -127,7 +146,15 @@ export function AddBookModal({ initialTitle = '', initialPages = '', onClose, on
         </div>
         <div className="field">
           <label>Страниц</label>
-          <input type="number" min="1" step="1" value={form.total_pages} onChange={e => set('total_pages', e.target.value)} placeholder="720" />
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={form.total_pages}
+            onChange={e => set('total_pages', e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="720"
+          />
         </div>
         <div className="modal-actions">
           <button className="btn btn-secondary" onClick={onClose}>Отмена</button>

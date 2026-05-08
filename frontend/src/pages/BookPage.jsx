@@ -54,7 +54,7 @@ export function BookPage({ bookId, onBack, onAddNote, onRefresh, onDelete, refre
   return (
     <div className="page">
       <div className="header">
-        <button className="btn-back" onClick={onBack}>←</button>
+        <button className="btn-back" onClick={onBack}>← Назад</button>
         <div style={{ flex: 1 }}>
           <div className="book-detail-header">
             <h2>{book.title}</h2>

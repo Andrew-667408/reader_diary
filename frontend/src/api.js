@@ -1,4 +1,4 @@
-const BASE = process.env.REACT_APP_API_URL || 'https://readerdiary-production.up.railway.app/api';
+const BASE = process.env.REACT_APP_API_URL || '/api';
 
 const handleResponse = (r) => {
   if (r.status === 204) return null;

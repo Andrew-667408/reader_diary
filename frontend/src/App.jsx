@@ -30,10 +30,44 @@ export default function App() {
 
   const getState = useCallback(() => stateRef.current, []);
 
+  // History API — enables TV remote back button (popstate)
+  useEffect(() => {
+    window.history.replaceState({ rdScreen: 'main' }, '');
+    const handlePop = () => setScreen('main');
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []);
+
+  // Helper: navigate forward and push history entry
+  const navigateTo = useCallback((newScreen, bookId) => {
+    window.history.pushState({ rdScreen: newScreen }, '');
+    if (newScreen === 'book' && bookId != null) {
+      openBookIdRef.current = bookId;
+      setOpenBookId(bookId);
+    }
+    setScreen(newScreen);
+  }, []);
+
   useEffect(() => {
     const assistant = initAssistant(getState);
 
     assistant.on('data', (event) => {
+      // Insets: native UI (icon, panel) tells us how much padding to reserve
+      if (
+        event.type === 'insets' ||
+        event.type === 'dynamic_insets' ||
+        event.type === 'minimum_static_insets' ||
+        event.type === 'maximum_static_insets'
+      ) {
+        const { top = 0, right = 0, bottom = 0, left = 0 } = event.insets || {};
+        const root = document.documentElement;
+        root.style.setProperty('--inset-top', `${top}px`);
+        root.style.setProperty('--inset-right', `${right}px`);
+        root.style.setProperty('--inset-bottom', `${bottom}px`);
+        root.style.setProperty('--inset-left', `${left}px`);
+        return;
+      }
+
       const { action } = event;
       if (!action) return;
       switch (action.action_id) {
@@ -42,9 +76,7 @@ export default function App() {
           if (action.parameters?.status) setActiveTab(action.parameters.status);
           break;
         case 'open_book':
-          openBookIdRef.current = action.parameters?.bookId;
-          setOpenBookId(action.parameters?.bookId);
-          setScreen('book');
+          navigateTo('book', action.parameters?.bookId);
           break;
         case 'add_book':
           setAddBookTitle(action.parameters?.title || '');
@@ -88,9 +120,7 @@ export default function App() {
           const doStartReading = (id) => {
             api.updateBook(id, { status: 'reading' }).then(refresh).catch(console.error);
             if (!openBookIdRef.current) {
-              openBookIdRef.current = id;
-              setOpenBookId(id);
-              setScreen('book');
+              navigateTo('book', id);
             }
           };
 
@@ -193,7 +223,7 @@ export default function App() {
           break;
         }
         case 'show_stats':
-          setScreen('stats');
+          navigateTo('stats');
           break;
         default:
           break;
@@ -211,9 +241,9 @@ export default function App() {
         <MainPage
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          onOpenBook={(id) => { openBookIdRef.current = id; setOpenBookId(id); setScreen('book'); }}
+          onOpenBook={(id) => navigateTo('book', id)}
           onAddBook={() => { setAddBookTitle(''); setShowAddBook(true); }}
-          onStats={() => setScreen('stats')}
+          onStats={() => navigateTo('stats')}
           refreshKey={refreshKey}
         />
       )}
