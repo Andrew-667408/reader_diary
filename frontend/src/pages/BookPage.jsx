@@ -70,6 +70,7 @@ export function BookPage({ bookId, onBack, onAddNote, onRefresh, onDelete, refre
             <button
               key={r}
               onClick={() => setRating(r)}
+              className="star-btn"
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: r <= (book.rating || 0) ? '#f4c430' : '#444' }}
             >★</button>
           ))}
@@ -81,14 +82,23 @@ export function BookPage({ bookId, onBack, onAddNote, onRefresh, onDelete, refre
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span>Прогресс:</span>
             <input
-              type="number"
-              min="0"
-              max={book.total_pages}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={pageInput}
-              onChange={e => setPageInput(e.target.value)}
+              onChange={e => setPageInput(e.target.value.replace(/\D/g, ''))}
               onBlur={updatePage}
-              onKeyDown={e => e.key === 'Enter' && e.target.blur()}
-              style={{ width: 64, padding: '2px 6px', fontSize: 13, borderRadius: 6, border: '1px solid #c8b99a', background: '#fff', color: '#2c2c2c', outline: 'none' }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.target.blur(); }
+                if (e.key === 'Escape' || e.key === 'GoBack') {
+                  setPageInput(String(book.current_page || 0));
+                  e.target.blur();
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+              className="progress-input"
+              style={{ width: 72, padding: '6px 8px', fontSize: 16, borderRadius: 6, border: '1px solid #c8b99a', background: '#fff', color: '#2c2c2c', outline: 'none' }}
             />
             <span>/ {book.total_pages} стр.</span>
           </div>

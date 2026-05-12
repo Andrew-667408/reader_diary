@@ -170,7 +170,7 @@ body {
   border-radius: 8px;
   padding: 10px 12px;
   color: #2c2c2c;
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
 }
 
@@ -277,6 +277,46 @@ select option { background: #faf6f0; color: #2c2c2c; }
   .header h1 { font-size: 26px; }
   .stat-card .value { font-size: 36px; }
   .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* TV: 1280px and above ─────────────────────────── */
+@media (min-width: 1280px) {
+  .page { padding: 32px 48px 32px; }
+
+  .header h1 { font-size: 42px; }
+
+  .tab { font-size: 22px; padding: 14px 28px; min-height: 58px; }
+  .btn { font-size: 20px; padding: 14px 28px; min-height: 58px; }
+
+  .book-card { padding: 24px 28px; border-radius: 20px; }
+  .book-card h3 { font-size: 26px; margin-bottom: 8px; }
+  .book-card .author { font-size: 18px; }
+  .book-card .meta { font-size: 16px; gap: 16px; margin-top: 12px; }
+
+  .progress-bar { height: 6px; margin-top: 12px; }
+
+  .note-item { font-size: 20px; padding: 18px; }
+  .note-item .note-type { font-size: 14px; }
+  .note-item .note-page { font-size: 14px; }
+
+  .stat-card { padding: 24px; }
+  .stat-card .value { font-size: 56px; }
+  .stat-card .label { font-size: 18px; }
+
+  .field label { font-size: 18px; }
+  .field input, .field select, .field textarea { font-size: 22px; padding: 14px 16px; }
+
+  .modal h2 { font-size: 32px; margin-bottom: 24px; }
+
+  .book-detail-header h2 { font-size: 32px; }
+  .book-detail-header .author { font-size: 20px; }
+
+  .empty { font-size: 22px; }
+
+  .top-list li { font-size: 20px; padding: 18px; }
+
+  .progress-input { width: 96px !important; font-size: 20px !important; padding: 6px 10px !important; }
+  .star-btn { font-size: 36px !important; }
 }
 
 .NativePanel {

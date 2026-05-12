@@ -147,11 +147,11 @@ export function AddBookModal({ initialTitle = '', initialPages = '', onClose, on
         <div className="field">
           <label>Страниц</label>
           <input
-            type="number"
-            min="1"
-            step="1"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={form.total_pages}
-            onChange={e => set('total_pages', e.target.value)}
+            onChange={e => set('total_pages', e.target.value.replace(/\D/g, ''))}
             onKeyDown={handleKey}
             placeholder="720"
           />

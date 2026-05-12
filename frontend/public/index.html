@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
@@ -27,23 +27,32 @@
     <title>Читательский дневник</title>
     <script>
       (function() {
-        var _onerror = null;
-        Object.defineProperty(window, 'onerror', {
-          get: function() { return _onerror; },
-          set: function(fn) {
-            _onerror = function(msg, src, line, col, err) {
-              if (!msg || msg === 'Network error' || msg === '[object Event]' || (err && err.message === 'Network error')) return true;
-              return fn && fn(msg, src, line, col, err);
+        function isSuppressed(s) {
+          s = String(s || '');
+          return s.indexOf('applicationId') !== -1
+            || s.indexOf('Network error') !== -1
+            || s === '[object Event]'
+            || s.indexOf('WebSocket') !== -1;
+        }
+        // Wrap addEventListener so CRA's overlay handler also gets filtered
+        var _add = window.addEventListener.bind(window);
+        window.addEventListener = function(type, fn, opts) {
+          if (type === 'error' || type === 'unhandledrejection') {
+            var wrapped = function(e) {
+              var msg = e.message || '';
+              var err = e.error ? String(e.error) : '';
+              var reason = e.reason ? (e.reason.message || String(e.reason)) : '';
+              if (isSuppressed(msg) || isSuppressed(err) || isSuppressed(reason)) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                return;
+              }
+              fn.call(this, e);
             };
-          },
-          configurable: true
-        });
-        window.addEventListener('error', function(e) {
-          if (e.message === 'Network error') { e.stopImmediatePropagation(); return false; }
-        }, true);
-        window.addEventListener('unhandledrejection', function(e) {
-          if (e.reason && e.reason.message === 'Network error') e.preventDefault();
-        });
+            return _add(type, wrapped, opts);
+          }
+          return _add(type, fn, opts);
+        };
       })();
     </script>
   </head>

@@ -34,7 +34,7 @@ export function AddNoteModal({ bookId, onClose, onSaved }) {
         </div>
         <div className="field">
           <label>Страница</label>
-          <input type="number" min="1" step="1" value={form.page} onChange={e => set('page', e.target.value)} placeholder="142" />
+          <input type="text" inputMode="numeric" pattern="[0-9]*" value={form.page} onChange={e => set('page', e.target.value.replace(/\D/g, ''))} placeholder="142" />
         </div>
         <div className="modal-actions">
           <button className="btn btn-secondary" onClick={onClose}>Отмена</button>

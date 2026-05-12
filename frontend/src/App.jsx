@@ -30,10 +30,20 @@ export default function App() {
 
   const getState = useCallback(() => stateRef.current, []);
 
-  // History API — enables TV remote back button (popstate)
+  // History API — enables TV remote back button (popstate).
+  // Two initial entries ('base' + 'main') act as a safety net: double-back events
+  // (e.g. closing a numeric keyboard on SberBox fires two history.back() calls)
+  // never exit the app — they just land back on main.
   useEffect(() => {
-    window.history.replaceState({ rdScreen: 'main' }, '');
-    const handlePop = () => setScreen('main');
+    window.history.replaceState({ rdScreen: 'base' }, '');
+    window.history.pushState({ rdScreen: 'main' }, '');
+    const handlePop = (e) => {
+      if (e.state?.rdScreen === 'base') {
+        // Popped past the app root — restore the main entry so the app never exits.
+        window.history.pushState({ rdScreen: 'main' }, '');
+      }
+      setScreen('main');
+    };
     window.addEventListener('popstate', handlePop);
     return () => window.removeEventListener('popstate', handlePop);
   }, []);
